@@ -20,14 +20,18 @@ import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemRe
 import org.springframework.batch.infrastructure.item.support.CompositeItemProcessor
 import org.springframework.batch.infrastructure.item.validator.BeanValidatingItemProcessor
 import org.springframework.batch.infrastructure.item.validator.ValidationException
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.core.io.ClassPathResource
+import org.springframework.transaction.PlatformTransactionManager
 import javax.sql.DataSource
 
 
 @Configuration
 @EnableJdbcJobRepository
+@Import(DataSourceConfiguration::class)
 class BatchConfiguration {
 
     @Bean
@@ -61,9 +65,17 @@ class BatchConfiguration {
     }
 
     @Bean
-    fun itemWriter(dataSource: DataSource): ItemWriter<FullNameMember> {
+    fun itemWriter(@Qualifier("businessDataSource") dataSource: DataSource): ItemWriter<FullNameMember> {
         return JdbcBatchItemWriterBuilder<FullNameMember>().dataSource(dataSource).sql(
-            "INSERT INTO member (id, first_name, last_name, full_name) VALUES (:id, :firstName, :lastName, :fullName)"
+            """
+				INSERT INTO member (id, first_name, last_name, full_name)
+				VALUES (CAST(:id AS INTEGER), :firstName, :lastName, :fullName)
+				ON CONFLICT (id) DO UPDATE SET
+					first_name = EXCLUDED.first_name,
+					last_name = EXCLUDED.last_name,
+					full_name = EXCLUDED.full_name
+				
+				""".trimIndent()
         ).beanMapped().build()
     }
 
@@ -73,7 +85,7 @@ class BatchConfiguration {
     }
 
     @Bean
-    fun stepExecutionListener(dataSource: DataSource): StepExecutionListener {
+    fun stepExecutionListener(@Qualifier("businessDataSource") dataSource: DataSource): StepExecutionListener {
         return MemberStepExecutionListener(dataSource)
     }
 
@@ -84,11 +96,12 @@ class BatchConfiguration {
         itemProcessor: ItemProcessor<Member, FullNameMember>,
         itemWriter: ItemWriter<FullNameMember>,
         skipListener: SkipListener<Member, FullNameMember>,
-        stepExecutionListener: StepExecutionListener
+        stepExecutionListener: StepExecutionListener,
+        @Qualifier("businessPlatformTransactionManager") businessPlatformTransactionManager: PlatformTransactionManager
     ): Step {
         return StepBuilder(jobRepository).chunk<Member, FullNameMember>(5).reader(itemReader).processor(itemProcessor)
             .writer(itemWriter).skip(ValidationException::class.java).skipListener(skipListener).faultTolerant()
-            .listener(stepExecutionListener).build()
+            .listener(stepExecutionListener).transactionManager(businessPlatformTransactionManager).build()
     }
 
     @Bean
