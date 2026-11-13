@@ -1,4 +1,4 @@
-package com.example.spring_batch_example_kotlin
+package com.example.demo
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
