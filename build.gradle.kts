@@ -23,6 +23,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.springframework.boot:spring-boot-starter-batch")
 	implementation("org.springframework.boot:spring-boot-starter-batch-jdbc")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.github.oshai:kotlin-logging:8.0.7")
 	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-batch-test")
