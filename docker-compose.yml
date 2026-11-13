@@ -9,8 +9,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # PostgreSQL 18 以降のイメージは /var/lib/postgresql/data ではなくこのパスにマウントする
-      - postgres-data:/var/lib/postgresql
       # ボリュームが空の初回起動時にのみ実行される
       - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:

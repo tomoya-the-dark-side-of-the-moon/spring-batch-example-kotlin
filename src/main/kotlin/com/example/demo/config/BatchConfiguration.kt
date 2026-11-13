@@ -16,6 +16,7 @@ import org.springframework.batch.infrastructure.item.ItemProcessor
 import org.springframework.batch.infrastructure.item.ItemReader
 import org.springframework.batch.infrastructure.item.ItemWriter
 import org.springframework.batch.infrastructure.item.database.builder.JdbcBatchItemWriterBuilder
+import org.springframework.batch.infrastructure.item.database.builder.JpaItemWriterBuilder
 import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.batch.infrastructure.item.support.CompositeItemProcessor
 import org.springframework.batch.infrastructure.item.validator.BeanValidatingItemProcessor
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.core.io.ClassPathResource
+import org.springframework.orm.jpa.LocalEntityManagerFactoryBean
 import org.springframework.transaction.PlatformTransactionManager
 import javax.sql.DataSource
 
@@ -55,7 +57,7 @@ class BatchConfiguration {
     fun itemProcessor(): ItemProcessor<Member, FullNameMember> {
         val fullNameItemProcessor = ItemProcessor { item: Member ->
             FullNameMember(
-                item.id, item.firstName, item.lastName, item.firstName + " " + item.lastName
+                item.id?.toIntOrNull(), item.firstName, item.lastName, item.firstName + " " + item.lastName
             )
         }
 
@@ -65,18 +67,11 @@ class BatchConfiguration {
     }
 
     @Bean
-    fun itemWriter(@Qualifier("businessDataSource") dataSource: DataSource): ItemWriter<FullNameMember> {
-        return JdbcBatchItemWriterBuilder<FullNameMember>().dataSource(dataSource).sql(
-            """
-				INSERT INTO member (id, first_name, last_name, full_name)
-				VALUES (CAST(:id AS INTEGER), :firstName, :lastName, :fullName)
-				ON CONFLICT (id) DO UPDATE SET
-					first_name = EXCLUDED.first_name,
-					last_name = EXCLUDED.last_name,
-					full_name = EXCLUDED.full_name
-				
-				""".trimIndent()
-        ).beanMapped().build()
+    fun itemWriter(
+        @Qualifier("businessEntityManagerFactory") entityManagerFactoryBean: LocalEntityManagerFactoryBean
+    ): ItemWriter<FullNameMember> {
+        return JpaItemWriterBuilder<FullNameMember>().entityManagerFactory(entityManagerFactoryBean.getObject()!!)
+            .usePersist(true).build()
     }
 
     @Bean
