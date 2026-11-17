@@ -16,6 +16,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      local_test_network:
+        ipv4_address: 172.21.0.3
 
-volumes:
-  postgres-data:
+networks:
+  local_test_network:
+    external: true
