@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.ImportRuntimeHints
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.task.VirtualThreadTaskExecutor
 import org.springframework.orm.jpa.LocalEntityManagerFactoryBean
@@ -44,6 +45,7 @@ import javax.sql.DataSource
 @Configuration
 @EnableJdbcJobRepository
 @Import(DataSourceConfiguration::class)
+@ImportRuntimeHints(BatchRuntimeHints::class)
 class BatchConfiguration {
 
     @Bean

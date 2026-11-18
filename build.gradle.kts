@@ -4,6 +4,7 @@ plugins {
 	kotlin("plugin.jpa") version "2.3.21"
 	id("org.springframework.boot") version "4.1.2"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("org.graalvm.buildtools.native") version "0.11.5"
 }
 
 group = "com.example"
@@ -43,4 +44,16 @@ kotlin {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+graalvmNative {
+	binaries {
+		named("main") {
+			// native-image を持つ JDK (GraalVM) をツールチェーンから選ぶ
+			javaLauncher = javaToolchains.launcherFor {
+				languageVersion = JavaLanguageVersion.of(25)
+				nativeImageCapable = true
+			}
+		}
+	}
 }

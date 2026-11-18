@@ -1,6 +1,7 @@
 package com.example.demo.config
 
 import com.example.demo.datasource.MemberRoutingDataSource
+import com.example.demo.domain.FullNameMember
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.beans.factory.annotation.Qualifier
@@ -57,7 +58,8 @@ class DataSourceConfiguration {
         @Qualifier("memberImportDataSource") memberImportDataSource: DataSource?
     ): LocalEntityManagerFactoryBean {
         val localEntityManagerFactoryBean = LocalEntityManagerFactoryBean()
-        localEntityManagerFactoryBean.setPackagesToScan("com.example.demo.domain")
+        // ネイティブイメージでは実行時のクラスパススキャンが効かないため、エンティティを明示的に登録する
+        localEntityManagerFactoryBean.persistenceConfiguration.managedClass(FullNameMember::class.java)
         localEntityManagerFactoryBean.dataSource = memberImportDataSource
         val jpaVendorAdapter = HibernateJpaVendorAdapter()
         jpaVendorAdapter.setDatabase(Database.POSTGRESQL)
